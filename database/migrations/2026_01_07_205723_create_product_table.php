@@ -23,7 +23,7 @@ return new class extends Migration
             $table->foreignId('category_id')->constrained('categories')->onDelete('cascade');
             $table->foreignId('supplier_id')->constrained('suppliers')->onDelete('cascade');
 
-            $table->string('image_url')->nullable();
+            $table->string('image_url');
             $table->enum('status', ['in stock', 'out stock'])->default('in stock')->nullable();
             $table->timestamps();
         });

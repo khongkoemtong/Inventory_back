@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\UserModel;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use PhpParser\Node\Expr\FuncCall;
 
 class UserController extends Controller
@@ -18,7 +19,7 @@ class UserController extends Controller
         $user = UserModel::create([
             'username' => $request->username,
             'email' => $request->email,
-            'password' => $request->password,
+            'password' => Hash::make($request->password),
             'full_name' => $request->full_name,
             'role_id' => $request->role_id,
             'phone' => $request->phone,
@@ -121,5 +122,31 @@ class UserController extends Controller
             return  response()->json(['message' => 'can not find data in id = ', $id]);
         }
         return response()->json(['message' => 'successfullt ', 'result' => $FindUser]);
+    }
+
+    public function login (Request $request){
+
+      $login = $request->validate([
+        'username'=>'required|string',
+        'email'=>'required|string|email',
+        'password'=>'required|string|min:4'
+      ]);
+
+     $user =UserModel::where('email',$login['email'])->first();
+
+     if (!$user || !Hash::check($login['password'],$user->password)){
+        return response()->json([
+            'message'=>'wrong email and password  '
+        ],401);
+     }
+
+     $token =$user ->createToken('myapptoken')->plainTextToken;
+
+     return response()->json([
+        'user'=>$user,
+        'token'=>$token,
+     ]);
+
+    
     }
 }

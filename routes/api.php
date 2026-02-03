@@ -8,16 +8,21 @@ use App\Http\Controllers\SuppyerController;
 use App\Http\Controllers\UserController;
 
 use Illuminate\Support\Facades\Route;
+use PHPUnit\Metadata\Group;
 
 
-Route::prefix('user')->group(function(){
-    Route::post('/create',[UserController::class ,'create']);
-    Route::get('/read',[UserController::class,'read']);
-    Route::get('/read/{id}',[UserController::class,'readone']);
-    Route::delete('/delete/{id}',[UserController::class,'delete']);
-    Route::post('/update/{id}',[UserController::class,'update']);
+Route::middleware(['auth:sanctum','checkRole:admin'])->group(function (){
+    
+
+Route::prefix('role')->group(function(){
+    Route::post('/create',[RoleController::class ,'create']);
+    Route::get('/read',[RoleController::class,'read']);
+    Route::get('/read/{id}',[RoleController::class,'fetchone']);
+    Route::delete('/delete/{id}',[RoleController::class,'delete']);
+    Route::post('/update/{id}',[RoleController::class,'update']);
 
 });
+
 Route::prefix('categories')->group(function(){
     Route::post('/create',[RoleController::class ,'create']);
     Route::get('/read',[RoleController::class,'read']);
@@ -34,14 +39,6 @@ Route::prefix('suppliers')->group(function(){
     Route::post('/update/{id}',[SuppyerController::class,'update']);
 
 });
-Route::prefix('role')->group(function(){
-    Route::post('/create',[RoleController::class ,'create']);
-    Route::get('/read',[RoleController::class,'read']);
-    Route::get('/read/{id}',[RoleController::class,'fetchone']);
-    Route::delete('/delete/{id}',[RoleController::class,'delete']);
-    Route::post('/update/{id}',[RoleController::class,'update']);
-
-});
 Route::prefix('product')->group(function(){
     Route::post('/create',[ProductController::class ,'create']);
     Route::get('/read',[ProductController::class,'read']);
@@ -50,6 +47,22 @@ Route::prefix('product')->group(function(){
     Route::post('/update/{id}',[ProductController::class,'update']);
 
 });
+Route::prefix('user')->group(function(){
+    Route::post('/create',[UserController::class ,'create']);
+    Route::get('/read',[UserController::class,'read']);
+    Route::get('/read/{id}',[UserController::class,'readone']);
+    Route::delete('/delete/{id}',[UserController::class,'delete']);
+    Route::post('/update/{id}',[UserController::class,'update']);
+  
+
+});
+
+
+
+
+}); 
+
+  Route::post('login',[UserController::class,'login']);
 
 
 
