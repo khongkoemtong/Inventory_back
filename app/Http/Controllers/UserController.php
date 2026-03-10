@@ -9,29 +9,28 @@ use PhpParser\Node\Expr\FuncCall;
 
 class UserController extends Controller
 {
+
+
+
+   
     public function create(Request $request)
     {
-        $imagePath = null;
-        if ($request->hasFile('image')) {
-              $path = $request->file('image')->store('users', 'public');
-            $imagePath = asset('http://127.0.0.1:8000/storage/' . $path); // full URL
-        }
-        $user = UserModel::create([
-            'username' => $request->username,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'full_name' => $request->full_name,
-            'role_id' => $request->role_id,
-            'phone' => $request->phone,
-            'status' => $request->status,
-            'image' => $imagePath,
-
+        // មានតែ Super Admin ទេដែលត្រូវបានអនុញ្ញាតឱ្យចូលដល់ Route នេះ (តាមរយៈ Middleware)
+        $request->validate([
+            'username' => 'required|unique:users',
+            'email' => 'required|email|unique:users',
+            'password' => 'required|min:6',
         ]);
 
-        if (!$user) {
-            return response()->json(["message" => "can not insert data"]);
-        }
-        return response()->json(['message' => 'Insert data success']);
+        $user = UserModel::create([
+            'username' => $request->username,
+            'email'    => $request->email,
+            'password' => Hash::make($request->password),
+            'role_id'  => 2, // កំណត់ឱ្យទៅជា Admin ធម្មតា
+            'status'   => 1,
+        ]);
+
+        return response()->json(['message' => 'បង្កើត Admin ថ្មីជោគជ័យ!'], 201);
     }
     public function read()
     {
@@ -44,7 +43,6 @@ class UserController extends Controller
                 'message' => $user
             ]
         );
-        
     }
     public function readone($id)
     {
@@ -124,29 +122,34 @@ class UserController extends Controller
         return response()->json(['message' => 'successfullt ', 'result' => $FindUser]);
     }
 
-    public function login (Request $request){
+    public function login(Request $request)
+    {
+        $request->validate([
+            'username' => 'required',
+            'password' => 'required',
+        ]);
 
-      $login = $request->validate([
-        'username'=>'required|string',
-        'email'=>'required|string|email',
-        'password'=>'required|string|min:4'
-      ]);
+        // ១. ស្វែងរក User
+        $user = UserModel::where('username', $request->username)->first();
 
-     $user =UserModel::where('email',$login['email'])->first();
+        // ២. ផ្ទៀងផ្ទាត់ Password
+        if (!$user || !Hash::check($request->password, $user->password)) {
+            return response()->json(['message' => 'ឈ្មោះអ្នកប្រើ ឬលេខសម្ងាត់មិនត្រឹមត្រូវ'], 401);
+        }
 
-     if (!$user || !Hash::check($login['password'],$user->password)){
+        // ៣. បង្កើត Token (Sanctum)
+        $token = $user->createToken('admin_token')->plainTextToken;
+
         return response()->json([
-            'message'=>'wrong email and password  '
-        ],401);
-     }
+            'message' => 'Login Success',
+            'token' => $token,
+            'user' => $user->load('role') // បង្ហាញ Role មកជាមួយ
+        ]);
+    }
 
-     $token =$user ->createToken('myapptoken')->plainTextToken;
-
-     return response()->json([
-        'user'=>$user,
-        'token'=>$token,
-     ]);
-
-    
+    public function logout(Request $request)
+    {
+        $request->user()->currentAccessToken()->delete();
+        return response()->json(['message' => 'Logout Success']);
     }
 }

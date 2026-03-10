@@ -7,103 +7,87 @@ use Illuminate\Http\Request;
 
 class SuppyerController extends Controller
 {
-    public function create(Request $request){
-        $supplyer = SupplyerModel::create([
-            'name'=>$request->name,
-            'contact_name'=>$request->contact_name,
-            'phone'=>$request->phone,
-            'email'=>$request->email,
-            'address'=>$request->address,
+    // ១. កន្លែងបង្កើត (Create) - ថែម Field ដែលខ្វះ
+    public function create(Request $request)
+    {
+        $user = $request->user();
+
+        // គួរថែម Validation ដើម្បីកុំឱ្យបុក Error SQL ទៀត
+        $request->validate([
+            'name' => 'required',
+            'contact_name' => 'required', // ថែមនេះដើម្បីកុំឱ្យជាប់ error 1364
+            'phone' => 'required',
         ]);
 
-        if (!$supplyer){
-            return response()->json([
-                'message'=>'can not create data ',
-            ]);
-        }
-
-        return response()->json([
-            'message'=>'creatae table success ',
-
+        $supplier = SupplyerModel::create([
+            'name'         => $request->name,
+            'contact_name' => $request->contact_name, // បញ្ចូលឈ្មោះអ្នកទំនាក់ទំនង
+            'email'        => $request->email,        // បញ្ចូល email
+            'phone'        => $request->phone,
+            'address'      => $request->address,
+            'seller_id'    => $user->id, 
         ]);
 
-
-        
-
+        return response()->json(['message' => 'Supplier created!', 'data' => $supplier], 201);
     }
 
-    public function read(){
-        $user = SupplyerModel::all();
+    // ២. កន្លែងទាញយកទិន្នន័យ (Read)
+    public function read(Request $request)
+    {
+        $user = $request->user();
 
-
-        if (!$user){
-            return response ()->json([
-                'message'=>' Supplyer not found ',
-            ]);
+        if ($user->role_id == 4) {
+            $suppliers = SupplyerModel::all();
+        } else {
+            // Admin ឃើញតែ Supplier របស់ខ្លួនឯង
+            $suppliers = SupplyerModel::where('seller_id', $user->id)->get();
         }
 
-        return response()->json([
-            'message'=>$user
-        ]);
-
+        return response()->json($suppliers);
     }
 
-    public function update(Request $request ,$id){
-        $user = SupplyerModel::find($id);
+    // ៣. កន្លែងកែប្រែ (Update)
+    public function update(Request $request, $id)
+    {
+        $supplier = SupplyerModel::find($id);
 
-        if (!$user){
-            return response()->json([
-                'message'=>'can not find user ',
-            ]);
+        if (!$supplier) {
+            return response()->json(['message' => 'Cannot find supplier'], 404);
         }
 
-        $userUpdate = $user->update([
-            'name'=>$request->name,
-            'contact_name'=>$request->contact_name,
-            'phone'=>$request->phone,
-            'email'=>$request->email,
-            'address'=>$request->address,
+        $supplier->update([
+            'name'         => $request->name,
+            'contact_name' => $request->contact_name,
+            'phone'        => $request->phone,
+            'email'        => $request->email,
+            'address'      => $request->address,
+            // មិនបាច់ update seller_id ទេ ព្រោះម្ចាស់នៅដដែល
         ]);
 
-        if (!$userUpdate){
-            return response()->json([
-                'message'=>'can not update data ',
-            ]);
-        }
-
-        return response()->json([
-            'message'=>'update data success',
-        ]);
-
-
+        return response()->json(['message' => 'Update data success']);
     }
 
-    public function delete($id){
+    // ៤. កន្លែងលុប (Delete)
+    public function delete($id)
+    {
         $deleteData = SupplyerModel::destroy($id);
 
-        if (!$deleteData){
-            return response()->json([
-                'message'=>'can not delete data'
-            ]);
+        if (!$deleteData) {
+            return response()->json(['message' => 'Cannot delete data'], 400);
         }
 
-        return response()->json([
-            'message'=>'update data success',
-        ]);
+        return response()->json(['message' => 'Delete data success']);
     }
-    public function fetchone ($id){
+
+    // ៥. ទាញយកទិន្នន័យតែមួយ (Fetch One)
+    public function fetchone($id)
+    {
         $fetchData = SupplyerModel::find($id);
 
-        if (!$fetchData){
-            return response()->json([
-                'message'=>'can not find data',
-            ]);
+        if (!$fetchData) {
+            return response()->json(['message' => 'Cannot find data'], 404);
         }
 
-        return response()->json([
-            'Message'=>$fetchData
-
-        ]);
-
+        return response()->json(['data' => $fetchData]);
     }
 }

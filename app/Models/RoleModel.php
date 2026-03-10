@@ -8,13 +8,13 @@ use Illuminate\Database\Eloquent\Model;
 class RoleModel extends Model
 {
     use HasFactory;
-    protected $table = 'role';
-    protected $fillable = [
-        'name',
-    ];
-    public function users() {
+
+    protected $table = 'role'; // ឈ្មោះតារាងក្នុង DB របស់ប្អូន
+    protected $fillable = ['name'];
+
+    // ទំនាក់ទំនង៖ Role មួយ មាន User ច្រើន (Has Many)
+    public function users()
+    {
         return $this->hasMany(UserModel::class, 'role_id', 'id');
     }
-
-   
 }

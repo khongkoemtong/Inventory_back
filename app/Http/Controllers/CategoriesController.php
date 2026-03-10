@@ -4,115 +4,105 @@ namespace App\Http\Controllers;
 
 use App\Models\CategoryModel;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class CategoriesController extends Controller
 {
-    public function Create(Request $request){
+    /**
+     * ១. បង្កើត Category ថ្មី (ប្អូនខ្វះកន្លែងនេះមុនហ្នឹង)
+     */
+   /**
+     * ១. បង្កើត Category ថ្មី (Fixed for Image Upload)
+     */
+   // កន្លែងបង្កើត (Create)
+public function create(Request $request)
+{
+    $user = $request->user();
 
-     $imagePath = null;
-        if ($request->hasFile('image')) {
-              $path = $request->file('image')->store('users', 'public');
-            $imagePath = asset('http://127.0.0.1:8000/storage/' . $path); // full URL
-        }
-        $user = CategoryModel::create([
-            'name'=>$request->name,
-            'description'=>$request->description,
-            'image'=>$imagePath            
-        ]);
+    $category = CategoryModel::create([
+        'name'      => $request->name,
+        'seller_id' => $user->id, // បញ្ជាក់ថា Category នេះជារបស់ Admin ណា
+    ]);
 
-        if (!$user){
-            return response()->json([
-                'Message'=>'can not insert in to categories',
-            ]);
-        }
+    return response()->json(['message' => 'Category created!', 'data' => $category], 201);
+}
 
-        return response()->json([
-            'message'=>'insert success ',
-            'data'=>$user
-        ]);
+public function read(Request $request)
+{
+    $user = $request->user();
 
-
+    if ($user->role_id == 4) {
+        $categories = CategoryModel::with('products')->get();
+    } else {
+        $categories = CategoryModel::with('products')
+            ->where('seller_id', $user->id)
+            ->get();
     }
 
-    public  function read (){
-        $AllCagory = CategoryModel::all(); 
-
-        if (!$AllCagory){
-            return response()->json([
-                'message'=>'Category not found !'
-            ]);
-
-        }
-        return response()->json([
-            'message'=>$AllCagory
-        ]);
-    }
-
-    public  function fetchone($id){
-        $OneCategory = CategoryModel::findOrFail($id);
-
-        if (!$OneCategory){
-            return response()->json([
-                'message'=>'Data not found !'
-            ]);
-        }
-
-        return response()->json([
-            'message'=>$OneCategory
-        ]);
-
-    }
-
-
-    public function delete($id){
-        $DeleteUser = CategoryModel::destroy($id);
-
-
-        if (!$DeleteUser){
-            return response()->json([
-                'message'=>"can not delete user "
-            ]);
-        }
-
-        return response()->json([
-            'message'=>'delete data success !',
-        ]);
-
-    }
-
-    public function update(Request $request,$id){
-        $updateUser = CategoryModel::find($id);
-       
-        if (!$updateUser){
-            return response()->json([
-                'massage'=>'can not found user ',
-            ]);
-        }
-
-          $imagePath = null;
-        if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('users', 'public');
-            $imagePath = asset('http://127.0.0.1:8000/storage/' . $path); // full URL
-        }
-
-         $user =$updateUser->update([
-            'name'=>$request->name,
-            'description'=>$request->description,
-            'image'=>$imagePath            
-        ]);
-
-        if (!$user){
-            return response()->json([
-                'message'=>'can not delete data',
-
-            ]);
-        }
-
-        return response()->json([
-            'message'=>'update data success ',$user
-        ]);
-    }
+    return response()->json($categories);
+}
     
+    public function fetchone($id)
+    {
+        $category = CategoryModel::with('products')->find($id);
 
+        if (!$category) {
+            return response()->json(['message' => 'Data not found !'], 404);
+        }
 
+        return response()->json($category);
+    }
+
+    /**
+     * ៤. កែប្រែ Category
+     */
+    public function update(Request $request, $id)
+    {
+        $category = CategoryModel::find($id);
+
+        if (!$category) {
+            return response()->json(['message' => 'Category not found'], 404);
+        }
+
+        // ឆែកសិទ្ធិ៖ បើមិនមែនម្ចាស់ ហើយមិនមែន SuperAdmin គឺហាមកែ
+        if ($category->seller_id !== $request->user()->id && $request->user()->role->name !== 'SuperAdmin') {
+            return response()->json(['message' => 'No permission to update this category'], 403);
+        }
+
+        $data = $request->only(['name', 'description']);
+
+        if ($request->hasFile('image')) {
+            // លុបរូបចាស់ចេញបើមាន
+            if ($category->image) {
+                $oldPath = str_replace(asset('storage/'), '', $category->image);
+                Storage::disk('public')->delete($oldPath);
+            }
+            $path = $request->file('image')->store('categories', 'public');
+            $data['image'] = asset('storage/' . $path);
+        }
+
+        $category->update($data);
+
+        return response()->json([
+            'message' => 'Update success',
+            'data' => $category
+        ]);
+    }
+
+    /**
+     * ៥. លុប Category
+     */
+    public function delete(Request $request, $id)
+    {
+        $category = CategoryModel::find($id);
+        if (!$category) return response()->json(['message' => 'រកមិនឃើញ'], 404);
+
+        // ឆែកសិទ្ធិ៖ បើមិនមែនម្ចាស់ ហើយមិនមែន SuperAdmin គឺហាមលុប
+        if ($category->seller_id !== $request->user()->id && $request->user()->role->name !== 'SuperAdmin') {
+            return response()->json(['message' => 'គ្មានសិទ្ធិលុបប្រភេទផលិតផលអ្នកដទៃទេ'], 403);
+        }
+
+        $category->delete();
+        return response()->json(['message' => 'លុបជោគជ័យ!']);
+    }
 }

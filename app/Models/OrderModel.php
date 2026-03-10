@@ -5,11 +5,16 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class OrderModel extends Model
 {
     use HasFactory;
-    protected $table = 'order';
+    
+    // ត្រូវប្រាកដថាឈ្មោះ Table ក្នុង Database គឺ 'orders' (ជាទូទៅ Laravel ប្រើពហុវចនៈ)
+    protected $table = 'orders'; 
+    
     protected $fillable = [
         'user_id',
         'total_amount',
@@ -17,16 +22,22 @@ class OrderModel extends Model
         'order_date',
     ];
 
-    public function items()
+    // ទំនាក់ទំនងទៅកាន់ទំនិញលម្អិត (Order Items)
+    public function items(): HasMany
     {
-        return $this->hasMany(OrderModel::class);
+        // កែពី OrderModel::class ទៅ OrderItemModel::class
+        return $this->hasMany(OrderItemModel::class, 'order_id');
     }
-    public function payment()
+
+    // ទំនាក់ទំនងទៅកាន់ការបង់ប្រាក់ (Payment)
+    public function payment(): HasOne
     {
-        return $this->hasOne(PaymentModel::class);
+        return $this->hasOne(PaymentModel::class, 'order_id');
     }
-    public function user()
+
+    // ទំនាក់ទំនងទៅកាន់អ្នកទិញ (User)
+    public function user(): BelongsTo
     {
-        return $this->belongsTo(UserModel::class);
+        return $this->belongsTo(UserModel::class, 'user_id');
     }
 }
