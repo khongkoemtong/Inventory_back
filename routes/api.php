@@ -2,20 +2,20 @@
 
 use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\ProductQrController;
+use App\Http\Controllers\Api\UserProductQrController;
 use App\Http\Controllers\CategoriesController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SuppyerController;
-use App\Http\Controllers\UserController;
+use App\Http\Controllers\UserController;    
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-// Public Routes (អ្នកណាក៏ចូលបាន)
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
-
-// Protected Routes (ទាល់តែ Login ទើបចូលបាន)
+Route::get('/user-inventory/{userId}', [ProductQrController::class, 'getUserProducts']);// Protected Routes (ទាល់តែ Login ទើបចូលបាន)
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/read/{id}', [UserController::class, 'readone']);
    
@@ -27,6 +27,12 @@ Route::middleware('auth:sanctum')->group(function () {
     // ==========================================
     // ១. សម្រាប់តែ SuperAdmin ប៉ុណ្ណោះ (ID 4)
     // ==========================================
+      Route::prefix('user')->group(function () {
+            Route::get('/read', [UserController::class, 'read']);
+            
+            Route::post('/update/{id}', [UserController::class, 'update']);
+            Route::delete('/delete/{id}', [UserController::class, 'delete']);
+        });
     Route::middleware(['checkRole:SuperAdmin'])->group(function () {
         
         // Role Management
@@ -48,13 +54,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware(['checkRole:Admin,SuperAdmin'])->group(function () {
         
         // User/Customer Management
-        Route::prefix('user')->group(function () {
-            Route::get('/read', [UserController::class, 'read']);
-            
-            Route::post('/update/{id}', [UserController::class, 'update']);
-            Route::delete('/delete/{id}', [UserController::class, 'delete']);
-        });
-
+      
         // Product Management
         Route::prefix('product')->group(function () {
             Route::get('/read', [ProductController::class, 'read']);
@@ -64,15 +64,13 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::delete('/delete/{id}', [ProductController::class, 'delete']);
         });
 
-        // Supplier Management
         Route::prefix('suppliers')->group(function () {
             Route::get('/read', [SuppyerController::class, 'read']);
             Route::post('/create', [SuppyerController::class, 'create']);
             Route::post('/update/{id}', [SuppyerController::class, 'update']);
             Route::delete('/delete/{id}', [SuppyerController::class, 'delete']);
         });
-
-        // Categories Management
+ 
         Route::prefix('categories')->group(function () {
             Route::get('/read', [CategoriesController::class, 'read']);
             Route::post('/create', [CategoriesController::class, 'create']);

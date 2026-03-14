@@ -73,45 +73,47 @@ class UserController extends Controller
             'message' => 'delete successfully ',
         ]);
     }
-    public function update(Request $request, $id)
-    {
-        $user = UserModel::find($id);
-        if (!$user) {
-            return response()->json([
-                'message' => 'can not find id = ',
-                $id
-            ]);
-        }
-
-
-
-        $imagePath = null;
-        if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('users', 'public');
-            $imagePath = asset('http://127.0.0.1:8000/storage/' . $path); // full URL
-        }
-        $update = $user->update([
-            'username' => $request->username,
-            'email' => $request->email,
-            'password' => $request->password,
-            'full_name' => $request->full_name,
-            'role_id' => $request->role_id,
-            'phone' => $request->phone,
-            'status' => $request->status,
-            'image' => $imagePath,
-        ]);
-
-        if (!$update) {
-            return response()->json([
-                'message' => 'can not update data !',
-
-            ]);
-        }
-
+   public function update(Request $request, $id)
+{
+    $user = UserModel::find($id);
+    if (!$user) {
         return response()->json([
-            'message' => 'update data successfully',
-        ]);
+            'message' => 'Cannot find ID = ' . $id
+        ], 404);
     }
+
+    // ១. បង្កើត Array សម្រាប់ផ្ទុកទិន្នន័យដែលចង់ Update
+    // fill() នឹងយកតែទិន្នន័យណាដែលមានផ្ញើមកពី Request (Ignore តម្លៃដែលអត់មាន)
+    $data = $request->only([
+        'username', 'email', 'full_name', 'role_id', 'phone', 'status'
+    ]);
+
+    // ២. ត្រួតពិនិត្យ Password (Update តែពេលមានផ្ញើមកថ្មីប៉ុណ្ណោះ)
+    if ($request->filled('password')) {
+        $data['password'] = bcrypt($request->password);
+    }
+
+    // ៣. ត្រួតពិនិត្យរូបភាព
+    if ($request->hasFile('image')) {
+        $path = $request->file('image')->store('users', 'public');
+        // ប្តូរមកប្រើ storage_url បែបនេះវិញស្រួលជាង
+        $data['image'] = url('storage/' . $path); 
+    }
+
+    // ៤. ធ្វើការ Update តែ Column ណាដែលមានក្នុង $data
+    $update = $user->update($data);
+
+    if (!$update) {
+        return response()->json([
+            'message' => 'Cannot update data!',
+        ], 500);
+    }
+
+    return response()->json([
+        'message' => 'Update data successfully',
+        'user' => $user // បញ្ជូន data ថ្មីទៅឱ្យ Frontend វិញ
+    ]);
+}
 
     public function show($id)
     {

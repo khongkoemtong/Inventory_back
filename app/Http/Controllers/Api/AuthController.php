@@ -32,8 +32,13 @@ class AuthController extends Controller
             'role_id'   => 2, // Default ជា User
             'status'    => 1,
         ]);
-        
-        return response()->json(['message' => 'Register Success', 'user' => $user], 201);
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+    return response()->json([
+        'message' => 'Register Success',
+        'user' => $user,
+        'token' => $token, // ផ្ញើ Token ទៅឱ្យ React
+    ], 201);
     }
 
     public function login(Request $request)
