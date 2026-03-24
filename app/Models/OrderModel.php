@@ -12,7 +12,6 @@ class OrderModel extends Model
 {
     use HasFactory;
     
-    // ត្រូវប្រាកដថាឈ្មោះ Table ក្នុង Database គឺ 'orders' (ជាទូទៅ Laravel ប្រើពហុវចនៈ)
     protected $table = 'orders'; 
     
     protected $fillable = [
@@ -20,16 +19,17 @@ class OrderModel extends Model
         'total_amount',
         'status',
         'order_date',
+        'customer_name', // បន្ថែមសម្រាប់ភ្ញៀវមកហាង (Guest)
+        'phone',         // បន្ថែមសម្រាប់ភ្ញៀវមកហាង (Guest)
     ];
 
-    // ទំនាក់ទំនងទៅកាន់ទំនិញលម្អិត (Order Items)
+    // ទំនាក់ទំនងទៅកាន់ទំនិញលម្អិត
     public function items(): HasMany
     {
-        // កែពី OrderModel::class ទៅ OrderItemModel::class
         return $this->hasMany(OrderItemModel::class, 'order_id');
     }
 
-    // ទំនាក់ទំនងទៅកាន់ការបង់ប្រាក់ (Payment)
+    // ទំនាក់ទំនងទៅកាន់ការបង់ប្រាក់
     public function payment(): HasOne
     {
         return $this->hasOne(PaymentModel::class, 'order_id');

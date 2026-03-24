@@ -4,37 +4,37 @@ use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ProductQrController;
 use App\Http\Controllers\Api\UserProductQrController;
+use App\Http\Controllers\BotController;
 use App\Http\Controllers\CategoriesController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SuppyerController;
-use App\Http\Controllers\UserController;    
+use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
+Route::post('/orders/create', [OrderController::class, 'create']);
+Route::get('/send-test', [BotController::class, 'testBot']);
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
-Route::get('/user-inventory/{userId}', [ProductQrController::class, 'getUserProducts']);// Protected Routes (ទាល់តែ Login ទើបចូលបាន)
+Route::get('/read', [ProductController::class, 'read']);
+Route::get('/read/{id}', [ProductController::class, 'readOne']);
+Route::get('/user-inventory/{userId}', [ProductQrController::class, 'getUserProducts']); // Protected Routes (ទាល់តែ Login ទើបចូលបាន)
 Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/orders/my-orders', [OrderController::class, 'readMyOrders']);
     Route::get('/read/{id}', [UserController::class, 'readone']);
-   
-
     // Logout
     Route::post('logout', [UserController::class, 'logout']);
-    
 
-    // ==========================================
-    // ១. សម្រាប់តែ SuperAdmin ប៉ុណ្ណោះ (ID 4)
-    // ==========================================
-      Route::prefix('user')->group(function () {
-            Route::get('/read', [UserController::class, 'read']);
-            
-            Route::post('/update/{id}', [UserController::class, 'update']);
-            Route::delete('/delete/{id}', [UserController::class, 'delete']);
-        });
+    Route::prefix('user')->group(function () {
+        Route::get('/read', [UserController::class, 'read']);
+
+        Route::post('/update/{id}', [UserController::class, 'update']);
+        Route::delete('/delete/{id}', [UserController::class, 'delete']);
+    });
     Route::middleware(['checkRole:SuperAdmin'])->group(function () {
-        
+
         // Role Management
         Route::prefix('role')->group(function () {
             Route::post('/create', [RoleController::class, 'create']);
@@ -45,16 +45,16 @@ Route::middleware('auth:sanctum')->group(function () {
         });
 
         // SuperAdmin បង្កើត Admin ថ្មី
-        Route::post('/user/create-admin', [UserController::class, 'create']); 
+        Route::post('/user/create-admin', [UserController::class, 'create']);
     });
 
     // ==========================================
     // ២. សម្រាប់ Admin និង SuperAdmin (ID 1 និង 4)
     // ==========================================
     Route::middleware(['checkRole:Admin,SuperAdmin'])->group(function () {
-        
+
         // User/Customer Management
-      
+
         // Product Management
         Route::prefix('product')->group(function () {
             Route::get('/read', [ProductController::class, 'read']);
@@ -70,7 +70,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('/update/{id}', [SuppyerController::class, 'update']);
             Route::delete('/delete/{id}', [SuppyerController::class, 'delete']);
         });
- 
+
         Route::prefix('categories')->group(function () {
             Route::get('/read', [CategoriesController::class, 'read']);
             Route::post('/create', [CategoriesController::class, 'create']);
@@ -80,7 +80,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // Analytics / Report (Admin ក៏មើលបាន)
         Route::get('/analytics/summary', [AnalyticsController::class, 'getSummary']);
-        
+
         // Admin មើល Order ទាំងអស់ក្នុង System
         Route::get('/orders/read-all', [OrderController::class, 'readall']);
     });
@@ -89,8 +89,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // ៣. សម្រាប់ User ធម្មតា និងគ្រប់ Role ទាំងអស់
     // ==========================================
     Route::prefix('orders')->group(function () {
-        Route::post('/create', [OrderController::class, 'create']); 
-        Route::get('/my-orders', [OrderController::class, 'readMyOrders']); 
+       
+        Route::get('/my-orders', [OrderController::class, 'readMyOrders']);
     });
-
 });

@@ -29,7 +29,7 @@ class AuthController extends Controller
             'full_name' => $request->full_name,
             'email'     => $request->email,
             'password'  => Hash::make($request->password),
-            'role_id'   => 2, // Default ជា User
+            'role_id'   => 2, 
             'status'    => 1,
         ]);
         $token = $user->createToken('auth_token')->plainTextToken;
@@ -37,7 +37,7 @@ class AuthController extends Controller
     return response()->json([
         'message' => 'Register Success',
         'user' => $user,
-        'token' => $token, // ផ្ញើ Token ទៅឱ្យ React
+        'token' => $token,
     ], 201);
     }
 

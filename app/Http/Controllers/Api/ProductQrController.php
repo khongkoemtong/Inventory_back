@@ -20,7 +20,7 @@ class ProductQrController extends Controller
         }
 
         // ប្រើ IP ដែលអ្នកឆែកឃើញក្នុង Debian (hostname -I)
-        $my_computer_ip = "192.168.110.13 "; 
+        $my_computer_ip = "192.168.0.152"; 
         
         // ប្រើ Port 5173 ព្រោះអ្នកប្រើ Vite/React
         $frontendUrl = "http://{$my_computer_ip}:5173/inventory/{$userId}";

@@ -5,12 +5,7 @@ return [
 
     'allowed_methods' => ['*'],
 
-    // កុំដាក់ Duplicate key 'allowed_origins' ពីរដង
-    'allowed_origins' => [
-        'http://localhost:5173', 
-        'http://127.0.0.1:5173',
-        'http://192.168.1.10:5173'
-    ],
+    'allowed_origins' => ['*'], // អនុញ្ញាតឱ្យគ្រប់គ្នាចូលបាន
 
     'allowed_origins_patterns' => [],
 
@@ -20,5 +15,5 @@ return [
 
     'max_age' => 0,
 
-    'supports_credentials' => true,
+    'supports_credentials' => false, // បើប្រើ Sanctum/Auth ត្រូវទុក true បើអត់ទេដាក់ false ក៏បាន
 ];
